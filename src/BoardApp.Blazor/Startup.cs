@@ -9,8 +9,6 @@ namespace BoardApp.Blazor
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddBlazoredLocalStorage();
-            services.AddSingleton<IBoardItemService, BoardItemService>();
         }
 
         public void Configure(IComponentsApplicationBuilder app)
