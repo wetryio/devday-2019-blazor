@@ -1,0 +1,23 @@
+﻿<div class="items-container">
+    <CascadingValue Value="this">
+        @ChildContent
+    </CascadingValue>
+</div>
+@code{
+    [Parameter] public List<BoardItem> Tasks { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public EventCallback<BoardItem> OnStatusUpdated { get; set; }
+
+    public BoardItem Payload { get; set; }
+
+    public async Task UpdateJobAsync(Status newStatus)
+    {
+        var task = Tasks.SingleOrDefault(x => x.Id == Payload.Id);
+
+        if (task != null)
+        {
+            task.Status = newStatus;
+            await OnStatusUpdated.InvokeAsync(Payload);
+        }
+    }
+}

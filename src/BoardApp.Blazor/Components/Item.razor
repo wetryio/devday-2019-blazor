@@ -1,0 +1,24 @@
+﻿@inject IJSRuntime Js
+
+<li class="draggable" draggable="true" title="@BoardItem.Summary" @ondragstart="@(() => HandleDragStart(BoardItem))">
+    <p class="description">@BoardItem.Description</p>
+    @if (!string.IsNullOrEmpty(BoardItem.File))
+    {
+        <button class="btn btn-dark btn-sm" @onclick="DownloadFileAsync">Download File</button>
+    }
+</li>
+
+@code {
+    [CascadingParameter] ItemsContainer Container { get; set; }
+    [Parameter] public BoardItem BoardItem { get; set; }
+
+    private void HandleDragStart(BoardItem selectedItem)
+    {
+        Container.Payload = selectedItem;
+    }
+
+    private async Task DownloadFileAsync()
+    {
+        await Js.InvokeAsync<object>("saveAsFile", $"{BoardItem.Summary}.png", BoardItem.File);
+    }
+}

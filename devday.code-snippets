@@ -1,0 +1,231 @@
+{
+	"AjaxCallForItems": {
+		"prefix": [
+			"getTasks"
+		],
+		"body": [
+			"@inject IBoardItemService boardService",
+			"\n<a href=\"/create\" class=\"btn btn-primary\">Create new item</a>",
+			"\n@code {",
+			"\n\tList<BoardItem> Tasks = new List<BoardItem>();",
+			"\n\tprotected override async Task OnInitializedAsync(){\n\t\tTasks = (await boardService.GetBoardItems()).ToList();\n\t}",
+			"}"
+		],
+		"description": "Index do ajax call to get services"
+	},
+	"ItemForDragAndDropHtml": {
+		"prefix": [
+			"dragAndDropItemHtml"
+		],
+		"body": [
+			"<li class=\"draggable\" draggable=\"true\" title=\"@BoardItem.Summary\" @ondragstart=\"@(() => HandleDragStart(BoardItem))\">",
+			"\t<p class=\"description\">@BoardItem.Description</p>",
+			"</li>"
+		],
+		"description": "Template for drag&drop item"
+	},
+	"ItemForDragAndDrop": {
+		"prefix": [
+			"dragAndDropItem"
+		],
+		"body": [
+			"@code {",
+			"\t[CascadingParameter] ItemsContainer Container { get; set; }",
+			"\t[Parameter] public BoardItem BoardItem { get; set; }",
+			"\n\tprivate void HandleDragStart(BoardItem selectedItem){\n\t\tContainer.Payload = selectedItem;\n\t}",
+			"}"
+		],
+		"description": "Code for drag&drop item"
+	},
+	"ItemListForDragAndDropHtml": {
+		"prefix": [
+			"dragAndDropItemListHtml"
+		],
+		"body": [
+			"<div class=\"task-status\">",
+			"\t<h3>@ListStatus (@Items.Count())</h3>",
+			"\t<ul class=\"dropzone @dropClass\" ondragover=\"event.preventDefault();\"",
+			"\t\t@ondrop=\"HandleDrop\"",
+			"\t\t@ondragenter=\"HandleDragEnter\"",
+			"\t\t@ondragleave=\"HandleDragLeave\">",
+			"\n\t@foreach (var item in Items)",
+			"\t{\n\t\t<Item BoardItem=\"item\"/>\n\t}",
+			"\t</ul>\n</div>"
+		],
+		"description": "Template for drag&drop item list"
+	},
+	"Code for drag&drop item list": {
+		"prefix": "dragAndDropItemList",
+		"body": [
+			"@code {",
+			"",
+			"    [CascadingParameter] ItemsContainer Container { get; set; }",
+			"    [Parameter] public Status ListStatus { get; set; }",
+			"    [Parameter] public Status[] AllowedStatuses { get; set; }",
+			"",
+			"    List<BoardItem> Items = new List<BoardItem>();",
+			"    string dropClass = \"\";",
+			"",
+			"    protected override void OnParametersSet()",
+			"    {",
+			"        Items.Clear();",
+			"        Items.AddRange(Container.Tasks.Where(x => x.Status == ListStatus));",
+			"    }",
+			"}"
+		],
+		"description": "Code for drag&drop item list"
+	},
+	"Code for drag&drop item list - DragEnter": {
+		"prefix": "dragAndDropItemListDragEnter",
+		"body": [
+			"private void HandleDragEnter()",
+			"{",
+			"    if (ListStatus == Container.Payload.Status) return;",
+			"",
+			"    if (AllowedStatuses != null && !AllowedStatuses.Contains(Container.Payload.Status))",
+			"    {",
+			"        dropClass = \"no-drop\";",
+			"    }",
+			"    else",
+			"    {",
+			"        dropClass = \"can-drop\";",
+			"    }",
+			"}"
+		],
+		"description": "Code for drag&drop item list - DragEnter"
+	},
+	"Code for drag&drop item list - DragLeaveAndDrop": {
+		"prefix": "dragAndDropItemListDragLeaveAndDrop",
+		"body": [
+			"private void HandleDragLeave()",
+			"{",
+			"    dropClass = \"\";",
+			"}",
+			"",
+			"private async Task HandleDrop()",
+			"{",
+			"    dropClass = \"\";",
+			"",
+			"    if (AllowedStatuses != null && !AllowedStatuses.Contains(Container.Payload.Status)) return;",
+			"",
+			"    await Container.UpdateJobAsync(ListStatus);",
+			"}"
+		],
+		"description": "Code for drag&drop item list - DragLeaveAndDrop"
+	},
+	"Html for drag&drop container": {
+		"prefix": "dragAndDropContainerHtml",
+		"body": [
+			"<div class=\"items-container\">",
+			"    <CascadingValue Value=\"this\">",
+			"        @ChildContent",
+			"    </CascadingValue>",
+			"</div>"
+		],
+		"description": "Html for drag&drop container"
+	},
+	"Code for drag&drop container": {
+		"prefix": "dragAndDropContainer",
+		"body": [
+			"@code{",
+			"    [Parameter] public List<BoardItem> Tasks { get; set; }",
+			"    [Parameter] public RenderFragment ChildContent { get; set; }",
+			"    [Parameter] public EventCallback<BoardItem> OnStatusUpdated { get; set; }",
+			"",
+			"    public BoardItem Payload { get; set; }",
+			"",
+			"    public async Task UpdateJobAsync(Status newStatus)",
+			"    {",
+			"        var task = Tasks.SingleOrDefault(x => x.Id == Payload.Id);",
+			"",
+			"        if (task != null)",
+			"        {",
+			"            task.Status = newStatus;",
+			"            await OnStatusUpdated.InvokeAsync(Payload);",
+			"        }",
+			"    }",
+			"}"
+		],
+		"description": "Code for drag&drop container"
+	},
+	"Html for drag&drop component": {
+		"prefix": "dragAndDropComponent",
+		"body": [
+			"<ItemsContainer Tasks=\"Tasks\" OnStatusUpdated=\"HandleStatusUpdated\">",
+			"    <ItemList ListStatus=\"Status.TODO\" AllowedStatuses=\"@(new Status[] { Status.INPROGRESS, Status.DONE })\" />",
+			"    <ItemList ListStatus=\"Status.INPROGRESS\" AllowedStatuses=\"@(new Status[] { Status.TODO })\" />",
+			"    <ItemList ListStatus=\"Status.DONE\" AllowedStatuses=\"@(new Status[] { Status.INPROGRESS })\" />",
+			"</ItemsContainer>"
+		],
+		"description": "Html for drag&drop component"
+	},
+	"Code for drag&drop component": {
+		"prefix": "dragAndDropComponentUpdateEvent",
+		"body": [
+			"async Task HandleStatusUpdated(BoardItem updatedTask)",
+			"{",
+			"    await boardService.UpdateBoardItem(updatedTask);",
+			"}"
+		],
+		"description": "Code for drag&drop component"
+	},
+	"Form for create item": {
+		"prefix": "createItemFormHtml",
+		"body": [
+			"<a href=\"/\">Back to board</a>",
+			"",
+			"<EditForm Model=\"Item\" OnValidSubmit=\"@CreateItemAsync\">",
+			"",
+			"    <DataAnnotationsValidator />",
+			"    <ValidationSummary />",
+			"",
+			"    <div class=\"form-group\">",
+			"        <label>Summary</label>",
+			"        <input type=\"text\" class=\"form-control\" placeholder=\"Summary\" @bind=\"Item.Summary\" />",
+			"    </div>",
+			"",
+			"    <div class=\"form-group\">",
+			"        <label>Summary</label>",
+			"        <input type=\"text\" class=\"form-control\" placeholder=\"Description\" @bind=\"Item.Description\" />",
+			"    </div>",
+			"    <div class=\"form-group\">",
+			"        <label>Summary</label>",
+			"        <input type=\"text\" class=\"form-control\" placeholder=\"Author\" @bind=\"Item.Author\" />",
+			"    </div>",
+			"    <input type=\"submit\" />",
+			"</EditForm>",
+			""
+		],
+		"description": "Form for create item"
+	},
+	"Code for create item": {
+		"prefix": "createItemForm",
+		"body": [
+			"@code {",
+			"    public BoardItem Item { get; set; } = new BoardItem();",
+			"    public bool ShowError { get; set; }",
+			"",
+			"    public async Task CreateItemAsync()",
+			"    {",
+			"        if (await boardService.CreateBoardItem(Item))",
+			"        {",
+			"            navigationManager.NavigateTo(\"/\");",
+			"        }",
+			"        else",
+			"        {",
+			"            ShowError = true;",
+			"        }",
+			"    }",
+			"}"
+		],
+		"description": "Code for create item"
+	},
+	"Inject for create item": {
+		"prefix": "createItemFormInject",
+		"body": [
+			"@inject IBoardItemService boardService",
+			"@inject NavigationManager navigationManager"
+		],
+		"description": "Inject for create item"
+	}
+}
